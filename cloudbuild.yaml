@@ -1,5 +1,9 @@
 steps:
+  # Enable BuildKit by setting environment variables
   - name: 'gcr.io/cloud-builders/docker'
+    env:
+      - 'DOCKER_BUILDKIT=1'
+      - 'BUILDKIT_PROGRESS=plain'
     args:
       - 'build'
       - '--file=docker/prod.Dockerfile'

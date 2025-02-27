@@ -3,13 +3,17 @@ steps:
     args:
       - 'build'
       - '--file=docker/prod.Dockerfile'
-      - '--tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${SHORT_SHA}'
-      - '.'  # Build context (adjust if needed)
+      - '--tag=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$SHORT_SHA'
+      - '.'
     id: 'build'
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${SHORT_SHA}']
+    args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$SHORT_SHA']
     id: 'push'
 images:
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${SHORT_SHA}'
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$SHORT_SHA'
 options:
   logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _REGION: asia-south1
+  _REPO_NAME: cloud-run-source-deploy
+  _IMAGE_NAME: care

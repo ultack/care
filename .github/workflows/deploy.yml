@@ -111,6 +111,9 @@ jobs:
           build-args: |
             APP_VERSION=${{ github.sha }}
             ADDITIONAL_PLUGS=${{ env.ADDITIONAL_PLUGS }}
+            BUILD_NUMBER=${{ github.run_number }}
+          tags: |
+            latest-${{ github.run_number }}
           cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
           cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
 
@@ -156,13 +159,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Google Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: gcr.io
-          username: _json_key
-          password: ${{ secrets.GCR_JSON_KEY }}
-
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -172,7 +168,6 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
-            gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}
           tags: |
             type=raw,value=production-latest,enable=${{ startsWith(github.event.ref, 'refs/tags/v') }}
             type=raw,value=production-latest-${{ github.run_number }}-{{date 'YYYYMMDD'}}-{{sha}},enable=${{ startsWith(github.event.ref, 'refs/tags/v') }}
@@ -188,10 +183,6 @@ jobs:
           # For GHCR
           ghcr_tags=$(jq -cr '.tags | map(select(startswith("ghcr.io/"))) | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")
           docker buildx imagetools create $ghcr_tags $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
-
-          # For GCR
-          gcr_tags=$(jq -cr '.tags | map(select(startswith("gcr.io/"))) | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")
-          docker buildx imagetools create $gcr_tags $(printf 'gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}@sha256:%s ' *)
 
       - name: Create Sentry release
         uses: getsentry/action-release@v1

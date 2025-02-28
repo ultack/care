@@ -185,9 +185,13 @@ jobs:
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *) \
-            $(printf 'gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}@sha256:%s ' *)
+          # For GHCR
+          ghcr_tags=$(jq -cr '.tags | map(select(startswith("ghcr.io/"))) | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools create $ghcr_tags $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
+
+          # For GCR
+          gcr_tags=$(jq -cr '.tags | map(select(startswith("gcr.io/"))) | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+          docker buildx imagetools create $gcr_tags $(printf 'gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}@sha256:%s ' *)
 
       - name: Create Sentry release
         uses: getsentry/action-release@v1

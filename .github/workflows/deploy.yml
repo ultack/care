@@ -27,7 +27,16 @@ env:
   CONTAINER_NAME_CRON: "care-celery-beat"
 
 jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/reusable-test.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      event_name: ${{ github.event_name }}
+
   build:
+    needs: test
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -288,3 +297,30 @@ jobs:
           service: ${{ env.ECS_SERVICE_BACKEND }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
+
+  deploy-google-cloud-run:
+    needs: merge-manifests
+    if: github.ref == 'refs/heads/develop'
+    name: Deploy to Google Cloud Run
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          version: "latest"
+        env:
+          CLOUDSDK_CORE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          CLOUDSDK_COMPUTE_REGION: ${{ secrets.GCP_REGION }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy care-backend \
+            --image gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}:latest-${{ github.run_number }} \
+            --region ${{ secrets.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated

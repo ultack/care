@@ -124,5 +124,6 @@ jobs:
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
+            --port 9000 \
             --command="/app/start.sh" \
             --env-vars-file=env.yaml

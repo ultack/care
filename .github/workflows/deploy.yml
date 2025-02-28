@@ -113,7 +113,7 @@ jobs:
             ADDITIONAL_PLUGS=${{ env.ADDITIONAL_PLUGS }}
             BUILD_NUMBER=${{ github.run_number }}
           tags: |
-            latest-${{ github.run_number }}
+            gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}:latest-${{ github.run_number }}
           cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
           cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
 

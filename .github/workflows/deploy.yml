@@ -27,16 +27,7 @@ env:
   CONTAINER_NAME_CRON: "care-celery-beat"
 
 jobs:
-  test:
-    name: Test
-    uses: ./.github/workflows/reusable-test.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    with:
-      event_name: ${{ github.event_name }}
-
   build:
-    needs: test
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -61,6 +52,7 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
+            gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -71,6 +63,13 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCR_JSON_KEY }}
 
       - name: Cache Docker layers
         uses: actions/cache@v4
@@ -100,6 +99,21 @@ jobs:
           cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
           cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
 
+      - name: Build and push to GCR
+        id: build-gcr
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/prod.Dockerfile
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            APP_VERSION=${{ github.sha }}
+            ADDITIONAL_PLUGS=${{ env.ADDITIONAL_PLUGS }}
+          cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
+          cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+
       - name: Export digest
         run: |
           mkdir -p ${{ runner.temp }}/digests
@@ -118,7 +132,6 @@ jobs:
         run: |
           rm -rf ${{ runner.temp }}/.buildx-cache
           mv ${{ runner.temp }}/.buildx-cache-new ${{ runner.temp }}/.buildx-cache
-
 
   merge-manifests:
     needs: build
@@ -143,6 +156,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCR_JSON_KEY }}
+
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -152,6 +172,7 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
+            gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}
           tags: |
             type=raw,value=production-latest,enable=${{ startsWith(github.event.ref, 'refs/tags/v') }}
             type=raw,value=production-latest-${{ github.run_number }}-{{date 'YYYYMMDD'}}-{{sha}},enable=${{ startsWith(github.event.ref, 'refs/tags/v') }}
@@ -165,7 +186,8 @@ jobs:
         working-directory: ${{ runner.temp }}/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
+            $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *) \
+            $(printf 'gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}@sha256:%s ' *)
 
       - name: Create Sentry release
         uses: getsentry/action-release@v1

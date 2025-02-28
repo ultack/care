@@ -16,22 +16,14 @@ concurrency:
 
 jobs:
   build-gcr:
-    name: Build and Push to GCR ${{ matrix.platform }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-24.04
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+    name: Build and Push to GCR linux/amd64
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
       - name: Prepare
         run: |
-          platform=${{ matrix.platform }}
+          platform=linux/amd64
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
       - name: Generate docker tags
@@ -70,7 +62,7 @@ jobs:
         with:
           context: .
           file: docker/prod.Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,push=true
           build-args: |

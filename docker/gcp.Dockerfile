@@ -23,7 +23,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --chmod=0755 scripts/install_typst.sh $APP_HOME
+COPY scripts/install_typst.sh $APP_HOME
+RUN chmod 0755 $APP_HOME/install_typst.sh
 RUN TYPST_VERSION=${TYPST_VERSION} $APP_HOME/install_typst.sh
 
 # use pipenv to manage virtualenv
@@ -53,9 +54,11 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 
 RUN chown django:django $APP_HOME
 
-COPY --from=builder --chmod=0755 /usr/local/bin/typst /usr/local/bin/typst
+COPY --from=builder /usr/local/bin/typst /usr/local/bin/typst
+RUN chmod 0755 /usr/local/bin/typst
 
-COPY --from=builder --chown=django:django $APP_HOME/.venv $APP_HOME/.venv
+COPY --from=builder $APP_HOME/.venv $APP_HOME/.venv
+RUN chown -R django:django $APP_HOME/.venv
 
 ARG APP_VERSION="unknown"
 ENV APP_VERSION=$APP_VERSION
@@ -63,7 +66,8 @@ ENV APP_VERSION=$APP_VERSION
 COPY scripts/install_typst.sh $APP_HOME
 RUN chmod 0755 $APP_HOME/install_typst.sh
 
-COPY --chown=django:django . $APP_HOME
+COPY . $APP_HOME
+RUN chown -R django:django $APP_HOME
 
 USER django
 

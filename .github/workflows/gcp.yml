@@ -116,25 +116,7 @@ jobs:
       - name: Decode Base64 env-vars and save to file
         run: |
           echo "${{ secrets.BASE64 }}" | base64 --decode > env.yaml
-          
-      - name: Celery Beat and migrations
-        run: |
-          gcloud run deploy celery-beat \
-            --image gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}:latest-${{ github.run_number }} \
-            --region ${{ secrets.GCP_REGION }} \
-            --min-instances=1 \
-            --command="/app/celery_beat.sh" \
-            --env-vars-file=env.yaml 
-
-      - name: Celery Worker
-        run: |
-          gcloud run deploy celery-worker \
-            --image gcr.io/${{ secrets.GCR_PROJECT_ID }}/${{ github.repository }}:latest-${{ github.run_number }} \
-            --region ${{ secrets.GCP_REGION }} \
-            --command="/app/celery_worker.sh" \
-            --min-instances=1 \
-            --env-vars-file=env.yaml
-            
+                      
           
       - name: Deploy to Cloud Run
         run: |

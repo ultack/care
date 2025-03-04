@@ -127,4 +127,5 @@ jobs:
             --allow-unauthenticated \
             --port 9000 \
             --command="/app/start.sh" \
-            --env-vars-file=env.yaml
+            --env-vars-file=env.yaml \
+            --memory 512Mi

@@ -22,7 +22,6 @@ export NEW_RELIC_CONFIG_FILE=/etc/newrelic.ini
 if [[ -f "$NEW_RELIC_CONFIG_FILE" ]]; then
     newrelic-admin run-program celery --app=config.celery_app worker --max-tasks-per-child=6 --loglevel=info
 else
-    celery --app=config.celery_app worker --max-tasks-per-child=6 --loglevel=info
-fi
+    celery --app=config.celery_app worker --max-tasks-per-child=6 --loglevel=info && python -m http.server --directory /dummy 8000
 
-python -m http.server --directory /dummy 8000
+fi

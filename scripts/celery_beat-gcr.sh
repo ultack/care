@@ -26,7 +26,5 @@ export NEW_RELIC_CONFIG_FILE=/etc/newrelic.ini
 if [[ -f "$NEW_RELIC_CONFIG_FILE" ]]; then
     newrelic-admin run-program celery --app=config.celery_app beat --loglevel=info
 else
-    celery --app=config.celery_app beat --loglevel=info
+    celery --app=config.celery_app beat --loglevel=info && python -m http.server --directory /dummy 8000
 fi
-
-run python -m http.server --directory /dummy 8000

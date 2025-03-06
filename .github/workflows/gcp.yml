@@ -140,7 +140,7 @@ jobs:
             --port 8000 \
             --command="/app/celery_worker.sh" \
             --env-vars-file=env.yaml \
-            --memory 512Mi
+            --memory 1024Mi
 
       - name: Deploy to Cloud Run
         run: |

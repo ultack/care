@@ -138,7 +138,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --port 8000 \
-            --command="/app/celery_worker.sh" \
+            --command="/app/celery_worker-gcr.sh" \
             --env-vars-file=env.yaml \
             --memory 1024Mi
 

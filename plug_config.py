@@ -8,7 +8,15 @@ scribe_plug = Plug(
     configs={},
 )
 
-plugs = [scribe_plug]
+hcx_plugin = Plug(
+    name="hcx",
+    package_name="git+https://github.com/ohcnetwork/care_hcx.git",
+    version="@hcx_emr",
+    configs={},
+)
+
+
+plugs = [hcx_plugin, scribe_plug]
 manager = PlugManager(plugs)
 
 

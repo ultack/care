@@ -14,10 +14,13 @@ hcx_plugin = Plug(
     version="@hcx_emr",
     configs={},
 )
+abdm_plug = Plug(
+    name="abdm",
+    package_name="git+https://github.com/ohcnetwork/care_abdm.git",
+    version="@abdm_emr",
+    configs={},
+)
 
 
-plugs = [hcx_plugin, scribe_plug]
+plugs = [hcx_plugin, scribe_plug,abdm_plug]
 manager = PlugManager(plugs)
-
-
-
